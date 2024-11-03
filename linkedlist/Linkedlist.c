@@ -26,6 +26,8 @@ void main(){
         scanf("%d",&choice);
     }while(choice == 0);
 }
+// singly linked list
+
 
 void beginsert(int item){
     node *ptr =(node*)malloc(sizeof(node));//arguman olarak verilen int itemi linked liste eklemek icin olusturulacak nodenin memorydeki yeri malloc ile allocate edildi ve adres onu point etmek icin olusturulan ptr pointerine tutturuldu
@@ -222,5 +224,153 @@ int countnode(node *st){
     }
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+//doubly linked list
+
+typedef struct Node{
+    int data;
+    struct Node *next;//pointer to the next node in sequence
+    struct Node *prev;//pointer to the previous node
+}node2;
+
+node2* head;// ilk nodeyi point ettritmek icin  head pointeri olusturulur
+
+//SIMDI GELELIM FASULYENIN FAYDALARINA!!!
+//NEDEN POINTER TO POINTER KULLANIYORUZ(**)?
+//ACCORDING TO CHATGPT;
+//HEADDEKI GUNCELLEMELERI ORIJINAL VERIYE GECIRMEK ICIN HEADE, HEADI POINT EDEN BASKA BIR POINTER(HEAD_REF) ILE ULASIYORUZ
+//PASS-BY-REFERENCE MANTIGIYLA ORIJINAL VERIYI YANI HEADI DEGISTIRMIS OLUYORUZ
+//EGER BUNU YAPMAK ISTEMIYORSAK 
+//TEK POINTER KULLANABILIRIZ AMA BU SEFER NEW_NODEYI RETURN EDEREK FUNCTION CAGIRILDIGINDA ONU BIR POINTERA TUTTURMALIYIZ
+
+//(*head_ref) de dereferencing mantigiyla calisir
+//head_ref--->head--->head_node
+//head'e, headin adresini tasiyan head_ref ile ulasip dereferencing ile asil value uzerinde modify yapilir
+//yani (*head_ref) same as head gibi dusunebilirsin sadece valuesiyle degil adresiyle erisiyoruz
+//head de pointer oldugundan onun point ettigi head_node modify edilir
+
+//(*head_ref) ifadesi, head_ref'in gösterdiği head pointer'ını dereference ederek, head'in tuttuğu adresi, yani listenin başındaki ilk düğümü elde eder. 
+//Bunun üzerinden listenin ilk düğümünü (head_node) değiştirebiliriz.
 
 
+void push(node2** head_ref,int new_data){
+    node2 *new_node = (node2*)malloc(sizeof(node2)); //node2 structure i sizeide yer allocate edilir new_node pointerine assign edilir
+
+    new_node->data = new_data; //arguman olarak verilen item new_node'ye yuklenir
+    new_node->next = (*head_ref);//head_ref in derefrencingi ile headin tuttugu adresi yeni olusturdugumuz new_nodenin nextine assign ediyoruz. 
+                                //boylece new_nodeden eski head nodeye ok cikiyo eger liste bos ise (*head_ref) zaten NULL olacagindan new_node'nin next'i null olacak
+    new_node->prev = NULL;// new_node yeni head node olacagindan previni null yapiyoruz
+
+    if((*head_ref) != NULL){//liste bos degilse
+        (*head_ref)->prev = new_node;// new nodeun adresi, (eski) head nodenin previne(*head_ref)'in derefrencingi ile assign edilmis yani eski head nodeden yeni nodeye ok cikmis
+    }
+    (*head_ref) = new_node;//new_nodenin adresi (*head_ref)'in derefrencingi ile heade assig edilmis artik new_node(yeni head nodeyi) point ediyo
+}
+
+void append(node2** head_ref, int new_data){
+    node2 *new_node = (node2*)malloc(sizeof(node2));
+
+    node2* temp = (*head_ref);//son nodeye erismek icin onu point etmesi saglanicak gecici bir pointer olusturulur
+
+    new_node->data = new_data;
+    new_node->next = NULL;//new_node sona ekleneceginden nexti null olur
+
+    if (*head_ref == NULL)//liste bos ise  
+    {
+        new_node->prev=NULL;//new_nodenin previ null yapilir
+        *head_ref = new_node;//head pointer new_nodeye baglanir
+        return;
+    }
+    else{//liste bos degil
+        while (temp->next != NULL)//tempin nexti null olmadikca
+        {
+            temp =temp->next;// temp bir bir ilerletilerek bir sonraki nodeye point ettirilir
+        }//en nihayetinde tempin nexti null yani dongu bitti ve temp last node
+
+        temp->next=new_node;//artik null degil new_nodenin adresini tutuyo yani eski last nodeden new_nodeye ok cikti
+        new_node->prev = temp;//new_nodenin previne tempin adresi assign edildi. new_nodeden (eski) last node olan tempin point ettigi nodeye ok cikti
+        return;
+    }
+}
+
+void insertAfter(node2* prev_node, int new_data){
+    if (prev_node == NULL){
+        printf("the given previous node cannot be NULL");
+        return;
+    }
+    node2 *new_node = (node2*)malloc(sizeof(node2));
+
+    new_node->data = new_data;
+    new_node->next = prev_node->next;//prev_nodenin nextinin point ettigi nodenin adresi new_nodenin point ettigi nodenin next'ine assign edilir eger null ise yani prev node last node is yeni nodenin nextine null atanmis olur
+    prev_node->next = new_node;//new_node pointerinin tuttugu new nodenin adresi prev_nodenin nextine assign edilir. boylece prev nodeden new nodeye ok cikar 
+    new_node->prev = prev_node;//prev_node pointerinin point ettigi nodenin adresi new nodenin nextine assign edilir. new nodeden prev nodeye ok cikmis olur
+
+    if (new_node->next != NULL){//eger new nodenin nexti null degilse cunku sonrasina node eklenmek istenen prev nodesi aslinda last node ise new node listenin sonuna eklenmis olur ve nexti null olur
+        new_node->next->prev = new_node;//new nodenin adresi new_nodenin pointeri yardimiyla new nodenin nextinin point ettigi nodenin previne assign edilir boylece new nodenin ardindaki nodeden new nodeye ok cikmis olur
+    }
+}
+
+void delbeg(node2**head_ref){
+    if (*head_ref == NULL) {
+        printf("List is already empty!\n");
+        return;
+    }
+    node2* ptr = (*head_ref);//head nodeyi tutmasi icin yeni bir node pointeri yaratip head nodenin adresini ona atiyoruz
+
+    (*head_ref) = (*head_ref)->next;//(*head_ref) dereferencingi ile head pointerini bir sonraki nodeye point ettirtiyoruz
+    (*head_ref)->prev=NULL;//(*head_ref)in point ettigi yeni head nodenin previne null atiyorz boylece eski head node ile bagi kopuyor
+    free(ptr);//eski head nodeyi yani islinmesi istenen nodeyi tutan pointeri siliyourz
+    // o nodeye point eden baska bir pointer olmadigindan node silinmis oluyor
+}
+
+void delend(node2**head_ref){
+    if (*head_ref == NULL) {
+        printf("List is already empty!\n");
+        return;
+    }
+    
+    node2* temp = (*head_ref);
+
+    if (temp->next == NULL)//liste tek elemanliysa
+    {
+        free(temp);
+        *head_ref = NULL;  // Listenin başını da NULL yapıyoruz, çünkü liste boşalacak
+        return;
+    }
+    while (temp->next != NULL){
+        temp = temp->next;
+    }//tempin point ettigi node last node
+
+    temp->prev->next = NULL;//last nodenin previndeki adresteki nodenin nexti null yapiliyo ki son 2 node arasindaki bag kopuyo
+    free(temp);// last nodeyi point eden tek pointer siliniyo boylece last node de siliniyo
+}
+
+void delAfter(node2** head_ref, node2* prev_node){
+    if (prev_node == NULL)
+    {
+        printf("previous node can't be null!\n");
+        return;
+    }
+    if (*head_ref == NULL)
+    {
+        printf("List is empty\n");
+        return;
+    }
+    if (prev_node->next == NULL) {
+        printf("There is no node after the specified node!\n");
+        return;
+    }
+
+    node2* temp = prev_node->next;//temp silinmesi istenen nodenin adresini tutan bir pointer 
+
+    if (temp->next != NULL)//eger temp listenin son elemani degilse
+    {
+        temp->next->prev= prev_node;//silinmesi istenen nodeden onceki nodenin adresi silinmesi istenenen nodeden sonraki nodenin previne assign edilmis 
+        //yani silinmesi istenen nodeden sonra gelen nodeden once gelen nodeye ok cikar
+    }
+    
+    prev_node->next = temp->next;//silinmesi istenen nodenin nextindeki adres, ondan onceki nodenin nextine assign edilmis
+    //yani silinmesi istenen nodeden once gelen nodeden sonra gelen nodeye ok cikmis
+    //silinemsi istenen nodenin iki tarafindaki baglantilar da koptu onu tek point edent temp pointeri var
+    free(temp);// temp pointeri da silindi ve boylece node silinmis oldu
+}
